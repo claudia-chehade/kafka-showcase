@@ -50,19 +50,23 @@ class Producer:
 
         # Configure the AvroProducer
         self.producer = AvroProducer(
-            self.broker_properties,
-            schema_registry=schema_registry
+            # self.broker_properties,
+            # schema_registry=schema_registry
+            {
+            "bootstrap.servers": BROKER_URL,
+            "schema.registry.url": SCHEMA_REGISTRY_URL
+            }
         )
 
     def create_topic(self):
         """Creates the producer topic if it does not already exist"""
         logger.info(f"PRODUCER: check creation of topic for {self.topic_name}")
 
-        client = AdminClient(self.broker_properties)
-        all_topics = client.list_topics().topics
+        
+        all_topics = self.client.list_topics().topics
         for topic in all_topics:
                 print(topic)
-        if client.list_topics(self.topic_name) is None:
+        if self.client.list_topics(self.topic_name) is None:
             logger.info(f'Create topic {self.topic_name}')
             NewTopic(
                 topic=self.topic_name,
