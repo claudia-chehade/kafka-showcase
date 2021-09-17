@@ -23,7 +23,7 @@ class Turnstile(Producer):
 
     def __init__(self, station):
         """Create the Turnstile"""
-        station_name = (
+        self.station_name = (
             station.name.lower()
             .replace("/", "_and_")
             .replace(" ", "_")
@@ -31,17 +31,12 @@ class Turnstile(Producer):
             .replace("'", "")
         )
 
-        #
-        #
-        # TODO: Complete the below by deciding on a topic name, number of partitions, and number of
-        # replicas
-        #
-        #
-        self.topic_name = f"turnstile_{station_name}"
+      
+        self.topic_name = f"turnstile_{self.station_name}"
         super().__init__(
             self.topic_name, # TODO: Come up with a better topic name
             key_schema=Turnstile.key_schema,
-            value_schema=Turnstile.value_schema, #TODO: Uncomment once schema is defined
+            value_schema=Turnstile.value_schema,
             num_partitions=1,
             num_replicas=1
         )
@@ -52,17 +47,14 @@ class Turnstile(Producer):
         """Simulates riders entering through the turnstile."""
         num_entries = self.turnstile_hardware.get_entries(timestamp, time_step)
         logger.info(f"turnstile {timestamp} {time_step}")
-        #
-        # TODO: Complete this function by emitting a message to the turnstile topic for the number
-        # of entries that were calculated
-        #
-        #
-        self.producer.produce(
-           topic=self.topic_name,
-           key={"timestamp": timestamp},
-           value={
-               'timestamp': timestamp,
-               'time_step': time_step
-           },
-        )
+        for i in range(num_entries):
+            self.producer.produce(
+            topic=self.topic_name,
+            key={"timestamp": timestamp},
+            value={
+                'station_id': self.station.station_id,
+                'station_name': self.station_name,
+                'line': self.station.color.name
+            },
+            )
 

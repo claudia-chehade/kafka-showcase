@@ -40,6 +40,8 @@ class Weather(Producer):
             "weather", # TODO: Come up with a better topic name
             key_schema=Weather.key_schema,
             value_schema=Weather.value_schema,
+            num_partitions=1,
+            num_replicas=1,
         )
 
         self.status = Weather.status.sunny

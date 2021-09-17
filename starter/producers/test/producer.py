@@ -11,10 +11,9 @@ logger = logging.getLogger(__name__)
 
 BROKER_URL = 'PLAINTEXT://localhost:9092'
 SCHEMA_REGISTRY_URL = "http://localhost:8081/"
-# SCHEMA_REGISTRY_URL = "http://schema-registry:8081/"
 
 
-class Producer:
+class ProducerAvro:
     """Defines and provides common functionality amongst Producers"""
 
     
@@ -37,32 +36,45 @@ class Producer:
         self.num_replicas = num_replicas
        
         # Configure the broker properties
-        schema_registry = CachedSchemaRegistryClient({"url": SCHEMA_REGISTRY_URL})
+        self.schema_registry = CachedSchemaRegistryClient({"url": SCHEMA_REGISTRY_URL})
         self.broker_properties = {
             "bootstrap.servers": BROKER_URL
         }
-        self.client = AdminClient(self.broker_properties)        
+        self.client = AdminClient(self.broker_properties)
+        
 
         # If the topic does not already exist, try to create it
-        if self.topic_name not in Producer.existing_topics:
+        if self.topic_name not in ProducerAvro.existing_topics:
             self.create_topic()
-            Producer.existing_topics.add(self.topic_name)
+            ProducerAvro.existing_topics.add(self.topic_name)
+
+        logger.info('PRODUCER before registering schema: ')
+        # schema_registry.register(topic_name+"-value", value_schema)
 
         # Configure the AvroProducer
         self.producer = AvroProducer(
             self.broker_properties,
-            schema_registry=schema_registry
+            schema_registry=self.schema_registry
         )
 
     def create_topic(self):
         """Creates the producer topic if it does not already exist"""
-        logger.info(f"PRODUCER: check creation of topic for {self.topic_name}")
+        logger.info(f"PRODUCER_AVRO: create topic for {self.topic_name}")
 
-        client = AdminClient(self.broker_properties)
-        all_topics = client.list_topics().topics
+        # client = AdminClient(self.broker_properties)
+        all_topics = self.client.list_topics().topics
         for topic in all_topics:
                 print(topic)
-        if client.list_topics(self.topic_name) is None:
+        # future_deleted_topics = self.client.delete_topics(list(all_topics.keys()))
+        # # Wait for operation to finish.
+        # for topic, f in future_deleted_topics.items():
+        #     try:
+        #         f.result()  # The result itself is None
+        #         print("Topic {} deleted".format(topic))
+        #     except Exception as e:
+        #         print("Failed to delete topic {}: {}".format(topic, e))
+
+        if self.client.list_topics(self.topic_name) is None:
             logger.info(f'Create topic {self.topic_name}')
             NewTopic(
                 topic=self.topic_name,
