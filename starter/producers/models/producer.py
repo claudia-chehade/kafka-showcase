@@ -10,8 +10,7 @@ from confluent_kafka.avro import AvroProducer, CachedSchemaRegistryClient
 logger = logging.getLogger(__name__)
 
 BROKER_URL = 'PLAINTEXT://localhost:9092'
-SCHEMA_REGISTRY_URL = "http://localhost:8081/"
-# SCHEMA_REGISTRY_URL = "http://schema-registry:8081/"
+SCHEMA_REGISTRY_URL = "http://localhost:8081"
 
 
 class Producer:
@@ -64,8 +63,8 @@ class Producer:
 
         
         all_topics = self.client.list_topics().topics
-        for topic in all_topics:
-                print(topic)
+        # for topic in all_topics:
+        #         print(topic)
         if self.client.list_topics(self.topic_name) is None:
             logger.info(f'Create topic {self.topic_name}')
             NewTopic(

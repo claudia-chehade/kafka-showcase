@@ -32,7 +32,7 @@ class Turnstile(Producer):
         )
 
       
-        self.topic_name = f"turnstile_{self.station_name}"
+        self.topic_name = f"turnstile" # _{self.station_name}
         super().__init__(
             self.topic_name, # TODO: Come up with a better topic name
             key_schema=Turnstile.key_schema,

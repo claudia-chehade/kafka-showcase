@@ -18,9 +18,6 @@ SCHEMA_REGISTRY_URL = "http://localhost:8081/"
 class Station(Producer):
     """Defines a single station"""
 
-    
-  
-
     def __init__(self, station_id, name, color, direction_a=None, direction_b=None):
         self.name = name
         station_name = (
@@ -31,7 +28,7 @@ class Station(Producer):
             .replace("'", "")
         )
 
-        topic_name = f"arrival_{station_name}"
+        topic_name = f"org.chicago.cta.station.arrivals.{station_name}"
 
         self.key_schema = avro.load(f"{Path(__file__).parents[0]}/schemas/arrival_key.json")
         self.value_schema = avro.load(f"{Path(__file__).parents[0]}/schemas/arrival_value.json")
@@ -89,8 +86,8 @@ class Station(Producer):
                "station_id": self.station_id,
                "train_id": train.train_id,
                "direction": direction,
-               "line": self.color,
-               "train_status": train.status,
+               "line": self.color.name,
+               "train_status": train.status.name,
                'prev_station_id': prev_station_id,
                'prev_direction': prev_direction
            }

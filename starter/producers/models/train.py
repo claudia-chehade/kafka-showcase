@@ -12,8 +12,8 @@ class Train:
     status = IntEnum("status", "out_of_service in_service broken_down", start=0)
 
     def __init__(self, train_id, status):
-        logger.info(f'type of train_id {type(train_id)}')
-        logger.info(f'type of status {type(status)}')
+        # logger.info(f'type of train_id {type(train_id)}')
+        # logger.info(f'type of status {type(status)}')
         self.train_id = train_id
         self.status = status
         if self.status is None:
