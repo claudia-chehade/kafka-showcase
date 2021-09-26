@@ -16,6 +16,9 @@ class Weather:
 
     def process_message(self, message):
         """Handles incoming weather data"""
-        logger.info("consuming weather process_message")
-        weather_json = json.loads(message.value())
+        logger.info("WEATHER: consuming weather process_message")
+#         weather_json = json.loads(message.value())
+        weather_json = json.loads(json.dumps(message.value()))
+        self.temperature = weather_json.get("temperature")
+        self.status = weather_json.get("status")
         logger.info("consuming weather process_message ", weather_json)

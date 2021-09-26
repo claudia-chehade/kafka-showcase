@@ -25,6 +25,8 @@ class KafkaConsumer:
         consume_timeout=0.1,
     ):
         """Creates a consumer object for asynchronous use"""
+        logger.info(f'CONSUMER: got a topic_name_pattern {str(topic_name_pattern)}')
+       
         self.topic_name_pattern = topic_name_pattern
         self.message_handler = message_handler
         self.sleep_secs = sleep_secs
@@ -33,19 +35,25 @@ class KafkaConsumer:
 
         # Configure the broker properties
         self.broker_properties = {
-            "bootstrap.servers": BROKER_URL, "group.id": "0"
+            "bootstrap.servers": BROKER_URL, 
+            "group.id": "0",
+            "default.topic.config": {
+                    "auto.offset.reset": "earliest"
+                }
         }
 
         # Create the Consumer, using the appropriate type.
         if is_avro is True:
+            logger.info('avro consumer created')
             self.broker_properties["schema.registry.url"] = "http://localhost:8081"
             self.consumer = AvroConsumer(self.broker_properties)
         else:
+            logger.info('consumer created')
             self.consumer = Consumer(self.broker_properties)
 
         # Configure the AvroConsumer and subscribe to the topics. Make sure to think about
         # how the `on_assign` callback should be invoked.
-        self.consumer.subscribe(topic_name_pattern, on_assign= self.on_assign)
+        self.consumer.subscribe([self.topic_name_pattern], on_assign= self.on_assign)
 
     # When using subscribe you can expect on_assign and on_revoke to be called with each group rebalance 
     # or new subscription.
@@ -54,7 +62,7 @@ class KafkaConsumer:
     # within the configured session.timeout.ms
     def on_assign(self, consumer, partitions):
         """Callback for when topic assignment takes place"""
-        # TODO: If the topic is configured to use `offset_earliest` set the partition offset to
+        # If the topic is configured to use `offset_earliest` set the partition offset to
         # the beginning or earliest
         
         for partition in partitions:
@@ -73,18 +81,16 @@ class KafkaConsumer:
 
     def _consume(self):
         """Polls for a message. Returns 1 if a message was received, 0 otherwise"""
-        #
-        #
-        # TODO: Poll Kafka for messages. Make sure to handle any errors or exceptions.
-        # Additionally, make sure you return 1 when a message is processed, and 0 when no message
-        # is retrieved.
-        #
-        #
+        # Poll Kafka for messages. 
         try:
             record = self.consumer.poll(self.consume_timeout);
             if record is None:
                 return 0
+            elif record.error() is not None:
+                logger.error(f"error while consuming: {message.error()}")
+                return 0           
             else:
+#                 logger.info(f"consumed {record.key()}-> {record.value()}")
                 self.message_handler(record)
                 return 1
         except SerializerError as err:

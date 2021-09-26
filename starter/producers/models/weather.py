@@ -7,6 +7,7 @@ import random
 import urllib.parse
 
 import requests
+from confluent_kafka import avro
 
 from models.producer import Producer
 
@@ -31,6 +32,14 @@ class Weather(Producer):
 
     def __init__(self, month):
         self.topic_name = "org.chicago.cta.weather.v1"
+        if Weather.key_schema is None:
+            with open(f"{Path(__file__).parents[0]}/schemas/weather_key.json") as f:
+                Weather.key_schema = json.load(f)
+
+        if Weather.value_schema is None:
+            with open(f"{Path(__file__).parents[0]}/schemas/weather_value.json") as f:
+                Weather.value_schema = json.load(f)
+       
         super().__init__(
             self.topic_name, # TODO: Come up with a better topic name
             key_schema=Weather.key_schema,
@@ -46,13 +55,7 @@ class Weather(Producer):
         elif month in Weather.summer_months:
             self.temp = 85.0
 
-        if Weather.key_schema is None:
-            with open(f"{Path(__file__).parents[0]}/schemas/weather_key.json") as f:
-                Weather.key_schema = json.load(f)
-
-        if Weather.value_schema is None:
-            with open(f"{Path(__file__).parents[0]}/schemas/weather_value.json") as f:
-                Weather.value_schema = json.load(f)
+        
 
     def _set_weather(self, month):
         """Returns the current weather"""
@@ -68,13 +71,23 @@ class Weather(Producer):
         self._set_weather(month)
 
         headers = {"Content-Type": "application/vnd.kafka.avro.v2+json"} 
-        wheather_dict = { 
-            "temperature": self.temp,
-            "status": self.status.name}
+#         wheather_dict = { 
+#             "temperature": self.temp,
+#             "status": self.status.name}
+#         data = {
+#             "records": [{"value": wheather_dict}],
+#             "key_schema": Weather.key_schema,
+#             "value_schema": Weather.value_schema
+#         }
         data = {
-            "records": [{"value": wheather_dict}],
-            "key_schema": Weather.key_schema,
-            "value_schema": Weather.value_schema
+            "key_schema": json.dumps(Weather.key_schema),
+            "value_schema": json.dumps(Weather.value_schema),
+            "records": [
+                {
+                    "value": {"temperature": float(self.temp), "status": self.status.name},
+                    "key": {"timestamp": self.time_millis()}
+                }
+            ]
         }
 
         logger.info(f'WHEATHER post message {json.dumps(data)}')

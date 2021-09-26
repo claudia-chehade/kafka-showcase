@@ -5,7 +5,7 @@ import faust
 
 
 logger = logging.getLogger(__name__)
-IN_TOPIC ='stations'
+IN_TOPIC ='org.chicago.cta.stations'
 OUT_TOPIC = 'org.chicago.cta.stations.table.v1'
 
 
@@ -38,7 +38,7 @@ app = faust.App("stations-stream", broker="kafka://localhost:9092", store="memor
 topic = app.topic(IN_TOPIC, value_type=Station)
 #  Define the output Kafka Topic
 out_topic = app.topic(OUT_TOPIC, partitions=1)
-# TODO: Define a Faust Table
+# Define a Faust Table
 transformed_station_table = app.Table(
    OUT_TOPIC,
    default=TransformedStation,
@@ -47,31 +47,34 @@ transformed_station_table = app.Table(
 )
 
 
-# TODO: Using Faust, transform input `Station` records into `TransformedStation` records. Note that
+# Using Faust, transform input `Station` records into `TransformedStation` records. Note that
 # "line" is the color of the station. So if the `Station` record has the field `red` set to true,
 # then you would set the `line` of the `TransformedStation` record to the string `"red"`
 @app.agent(IN_TOPIC)
 async def station(stations):
     async for station in stations:
+        logger.info('############### FAUST-STREAM got stations from connector')
         transformed_station = transform(station)
-        transformed_station_table[station.station_id] = transformed_station
+        transformed_station_table[station.get('station_id')] = transformed_station
         await out_topic.send(value=transformed_station)
 
 
 def transform(station):
-    transformed_station = TransformedStation()
-    transformed_station.station_id = station.station_id
-    transformed_station.station_name = station.station_name
-    transformed_station.order = station.order
-    transformed_station.line = get_line(station)
+#     logger.info('type of station ', type(station))
+    transformed_station = TransformedStation(
+        station.get('station_id'),
+        station.get('station_name'),
+        station.get('order'),
+        get_line(station)
+    )
     return transformed_station
 
 def get_line(station):
-    if station.red:
+    if  station.get('red') == 'true':
         return 'red'
-    if station.blue:
+    if station.get('blue') == 'true':
         return 'blue'
-    if station.green:
+    if station.get('green') == 'true':
         return 'green'
     return ''
 

@@ -13,19 +13,18 @@ CONNECTOR_NAME = "stations"
 
 def configure_connector():
     """Starts and configures the Kafka Connect connector"""
-    logging.debug("creating or updating kafka connect connector...")
+    logging.info("CONNECTOR creating or updating kafka connect connector...")
 
     resp = requests.get(f"{KAFKA_CONNECT_URL}/{CONNECTOR_NAME}")
     if resp.status_code == 200:
-        logging.debug("connector already created skipping recreation")
+        logging.info("connector already created skipping recreation")
         return
 
-    # TODO: Complete the Kafka Connect Config below.
-    # Directions: Use the JDBC Source Connector to connect to Postgres. Load the `stations` table
+    # The JDBC Source Connector connects to Postgres. Loads the `stations` table
     # using incrementing mode, with `stop_id` as the incrementing column name.
     # Make sure to think about what an appropriate topic prefix would be, and how frequently Kafka
     # Connect should run this connector (hint: not very often!)
-    logger.info("connector is running")
+    logger.info(".................. connector is running")
     resp = requests.post(
        KAFKA_CONNECT_URL,
        headers={"Content-Type": "application/json"},
@@ -34,18 +33,20 @@ def configure_connector():
            "config": {
                "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
                "key.converter": "org.apache.kafka.connect.json.JsonConverter",
-               "key.converter.schemas.enable": "false",
+               "key.converter.schemas.enable": "false", 
                "value.converter": "org.apache.kafka.connect.json.JsonConverter",
                "value.converter.schemas.enable": "false",
                "batch.max.rows": "500",
-               "connection.url": "jdbc:postgresql://postgres:5432/cta",
+               "connection.url": "jdbc:postgresql://localhost:5432/cta",
                "connection.user": "cta_admin",
                "connection.password": "chicago",
-               "table.whitelist": CONNECTOR_NAME,
+               "table.whitelist": "stations",
+#                "query": "select * from stations",
                "mode": "incrementing",
                "incrementing.column.name": "stop_id",
                "topic.prefix": "org.chicago.cta.",
                "poll.interval.ms": "300000",
+               "errors.log.enable": "true",
            }
        }),
     )
@@ -53,7 +54,7 @@ def configure_connector():
     ## Ensure a healthy response was given
     try:
         resp.raise_for_status()
-        logging.debug("connector created successfully")
+        logging.debug("CONNECTOR created successfully")
     except:
         logger.error(f"Failed to connect to postgres DB")
     

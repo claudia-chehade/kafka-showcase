@@ -47,14 +47,16 @@ class Turnstile(Producer):
         """Simulates riders entering through the turnstile."""
         num_entries = self.turnstile_hardware.get_entries(timestamp, time_step)
         logger.info(f"turnstile {timestamp} {time_step}")
+        color = str(self.station.color)
         for i in range(num_entries):
             self.producer.produce(
-            topic=self.topic_name,
-            key={"timestamp": timestamp},
-            value={
-                'station_id': self.station.station_id,
-                'station_name': self.station_name,
-                'line': self.station.color.name
-            },
+                topic=self.topic_name,
+                key={"timestamp": timestamp.timestamp()},
+                value={
+                    "station_id": self.station.station_id,
+                    "station_name": self.station_name,
+                    "line": self.station.color.name
+                },
+                key_schema = Turnstile.key_schema,
+                value_schema = Turnstile.value_schema
             )
-

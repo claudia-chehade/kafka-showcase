@@ -19,7 +19,9 @@ class Lines:
 
     def process_message(self, message):
         """Processes a station message"""
+        
         if "org.chicago.cta.station" in message.topic():
+#             logger.info(f'Lines incoming station message found in process_message')
             value = message.value()
             if message.topic() == "org.chicago.cta.stations.table.v1":
                 value = json.loads(value)

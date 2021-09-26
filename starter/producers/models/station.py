@@ -12,7 +12,7 @@ from models.producer import Producer
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_REGISTRY_URL = "http://localhost:8081/"
+SCHEMA_REGISTRY_URL = "http://localhost:8081"
 
 
 class Station(Producer):
@@ -33,34 +33,6 @@ class Station(Producer):
         self.key_schema = avro.load(f"{Path(__file__).parents[0]}/schemas/arrival_key.json")
         self.value_schema = avro.load(f"{Path(__file__).parents[0]}/schemas/arrival_value.json")
 
-        # value_schema_string = """{
-        # "doc": "Arrival values.",
-        # "name": "arrival.value",
-        # "namespace": "com.udacity",
-        # "type": "record",
-        # "fields": [
-        #     {"name": "station_id", "type": "int"},
-        #     {"name": "train_id", "type":  "string"},
-        #     {"name": "direction", "type":  "string"}      
-        # ]
-        # }"""
-        
-        # # logger.info(f'STATION schema: {value_schema_string}')
-        # self.value_schema = avro.loads(value_schema_string)
-
-        # key_schema_string = """{
-        #     "namespace": "com.udacity",
-        #     "type": "record",
-        #     "name": "arrival.key",
-        #     "fields": [
-        #         {
-        #         "name": "timestamp",
-        #         "type": "long"
-        #         }
-        #     ]
-        #     }"""
-        # self.key_schema = avro.loads(key_schema_string)
-
         super().__init__(
             topic_name,
             key_schema=self.key_schema,
@@ -68,7 +40,7 @@ class Station(Producer):
             num_partitions=1,
             num_replicas=1,
         )
-
+        
         self.station_id = int(station_id)
         self.color = color
         self.dir_a = direction_a
@@ -91,7 +63,10 @@ class Station(Producer):
                'prev_station_id': prev_station_id,
                'prev_direction': prev_direction
            }
-       
+        
+        logger.info(f'STATION producer is sending to topic {self.topic_name} ###################')
+        
+        
         p = self.producer
         # p = AvroProducer(self.broker_properties, schema_registry= CachedSchemaRegistryClient({"url": SCHEMA_REGISTRY_URL}))
         p.produce(
@@ -101,6 +76,7 @@ class Station(Producer):
             key_schema = self.key_schema,
             value_schema = self.value_schema
         )
+        
 
     def __str__(self):
         return "Station | {:^5} | {:<30} | Direction A: | {:^5} | departing to {:<30} | Direction B: | {:^5} | departing to {:<30} | ".format(
